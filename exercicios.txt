@@ -1,0 +1,84 @@
+1. ESTRUTURA DO PROJETO
+chat/: Contém a lógica da aplicação de chat (models, views, templates, urls).
+
+core/ (ou o nome do projeto): Contém as configurações globais do Django, como o arquivo settings.py e a raiz das URLs.
+
+2. MODELO CONVERSATION
+O modelo geralmente possui 3 campos principais:
+
+title: CharField (Armazena o título da conversa).
+
+user: ForeignKey (Relaciona a conversa a um usuário do Django).
+
+created_at / updated_at: DateTimeField (Registram as datas de criação e alteração).
+
+3. MODELO MESSAGE
+As 3 opções para o campo role (papel) são:
+
+system: Define o comportamento ou contexto inicial da IA.
+
+user: Representa as mensagens enviadas pelo usuário humano.
+
+assistant: Representa as respostas geradas pela IA.
+
+4. RELACIONAMENTO ENTRE MODELOS
+O relacionamento é Muitos para Um (Many-to-One). Justificativa: O modelo Message possui uma ForeignKey apontando para Conversation. Isso significa que uma conversa pode ter várias mensagens, mas cada mensagem pertence a apenas uma conversa específica.
+
+5. FORMULÁRIO ConversationCreateForm
+Campos para preencher: Apenas 1 (o campo title).
+
+O "title" é obrigatório? Sim, por padrão no Django campos CharField não nulos são obrigatórios para garantir que a conversa tenha uma identificação.
+
+6. FORMULÁRIO MessageCreateForm
+Expõe o "role"? Não.
+
+Onde é definido? O valor é definido diretamente na View (views.py), geralmente fixado como "user" quando o formulário é salvo, ou tratado pela lógica de integração com a API de chat.
+
+7. ROTAS DA APLICAÇÃO (App "chat")
+URL: '' | Name: conversation_list
+
+URL: <int:pk>/ | Name: conversation_detail
+
+URL: create/ | Name: conversation_create
+
+URL: <int:pk>/message/ | Name: message_create
+
+8. VIEW conversation_list
+Filtro: Retorna apenas as conversas do usuário logado.
+
+Onde: No arquivo chat/views.py, geralmente dentro do método get_queryset ou no filtro Conversation.objects.filter(user=request.user).
+
+9. DECORADORES @login_required e @require_POST
+Por que @require_POST? Para garantir que mensagens só sejam criadas via envio de formulário (segurança e integridade dos dados).
+
+Se acessar via GET: O Django retornará um erro HTTP 405 Method Not Allowed.
+
+10. DOCKER COMPOSE
+Os dois serviços principais são:
+
+web: O container que roda a aplicação Django.
+
+db: O container que roda o banco de dados MySQL.
+
+11. HEALTH CHECK
+URL: Geralmente /health/ ou /api/health/.
+
+Retorno: Um JSON como {"status": "ok"} e status HTTP 200.
+
+12. VARIÁVEIS DE AMBIENTE (MySQL)
+MYSQL_DATABASE (Nome do banco).
+
+MYSQL_USER (Usuário do banco).
+
+MYSQL_PASSWORD (Senha do usuário).
+
+13. COMANDO DE MIGRATION
+Bash
+docker compose exec web python manage.py makemigrations chat
+14. DJANGO ADMIN
+A URL padrão local é: http://127.0.0.1:8000/admin/
+
+15. CAMPOS auto_now_add e auto_now
+auto_now_add (created_at): Define a data/hora apenas uma vez, no momento em que o objeto é criado.
+
+auto_now (updated_at): Atualiza a data/hora automaticamente toda vez que o objeto é salvo ou editado.
